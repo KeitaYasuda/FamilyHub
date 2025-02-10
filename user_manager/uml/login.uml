@@ -1,0 +1,23 @@
+@startuml
+actor User
+participant "Frontend" as FE
+participant "AuthController" as AC
+participant "AuthService" as AS
+participant "UserRepository" as UR
+participant "TokenService" as TS
+
+User -> FE: Fill in login form
+FE -> AC: POST /auth/login\n{username, password}
+AC -> AS: login(username, rawPassword)
+AS -> UR: findByUsername(username)
+UR --> AS: return User
+AS -> AS: Validate password (using BCrypt)
+alt Password correct
+    AS -> TS: generateToken(user)
+    TS --> AS: return JWT token
+    AS --> AC: return token
+else Password incorrect
+    AS --> AC: throw Exception("Invalid password")
+end
+AC --> FE: HTTP 200 OK with JWT token\nor HTTP 401 Error
+@enduml

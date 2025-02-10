@@ -1,0 +1,24 @@
+@startuml
+actor User
+participant "Frontend" as FE
+participant "AuthController" as AC
+participant "AuthService" as AS
+participant "UserRepository" as UR
+database "Database" as DB
+
+User -> FE: Fill in registration form
+FE -> AC: POST /auth/register\n{username, password, email}
+AC -> AS: register(username, rawPassword, email)
+AS -> UR: findByUsername(username)
+UR --> AS: null
+alt New user
+    AS -> AS: Hash password (using BCrypt)
+    AS -> UR: save(new User)
+    UR --> AS: return saved User
+    AS --> AC: return User
+else User exists
+    UR --> AS: return existing User
+    AS --> AC: throw Exception("Username already exists")
+end
+AC --> FE: HTTP 200 OK ("User registered: username")\nor HTTP 400 Error
+@enduml

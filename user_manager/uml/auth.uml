@@ -1,0 +1,23 @@
+@startuml
+actor User
+participant "Frontend" as FE
+participant "JwtAuthenticationFilter" as JAF
+participant "TokenService" as TS
+participant "UserRepository" as UR
+participant "UserInfoController" as UIC
+
+User -> FE: Request protected resource\n(GET /auth/userinfo)
+FE -> JAF: HTTP GET /auth/userinfo\nAuthorization: Bearer <JWT>
+JAF -> TS: validateToken(<JWT>)
+alt Token valid
+    TS -> TS: Parse JWT and extract username
+    TS --> JAF: return username
+    JAF -> UR: findByUsername(username)
+    UR --> JAF: return User
+    JAF -> JAF: Build Authentication object
+    JAF -> UIC: Forward request with Authentication context
+else Token invalid
+    JAF --> FE: HTTP 401 Unauthorized
+end
+UIC -> FE: HTTP 200 OK with user info
+@enduml
